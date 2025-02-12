@@ -7,7 +7,7 @@ from xero_python.api_client import ApiClient, serialize
 from xero_python.api_client.configuration import Configuration
 from xero_python.identity import IdentityApi
 from xero_python.accounting import AccountingApi
-from xero_python.api_client.oauth2 import OAuth2Token
+from .utils import CustomOAuth2Token
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 import logging
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 api_client = ApiClient(
     Configuration(
         debug=True,
-        oauth2_token=OAuth2Token(
+        oauth2_token=CustomOAuth2Token(
             client_id=settings.CLIENT_ID,
             client_secret=settings.CLIENT_SECRET,
         ),
@@ -63,32 +63,23 @@ def obtain_xero_oauth2_token():
     token = cache.get("token")
     logger.info("Cached token: %s", token)
     if token:
-        oauth2_token = token["token"]
-        return {
-            "access_token": oauth2_token.get("access_token"),
-            "refresh_token": oauth2_token.get("refresh_token"),
-            "token_type": oauth2_token.get("token_type"),
-            "expires_in": oauth2_token.get("expires_in"),
-            "expires_at": oauth2_token.get("expires_at"),
-            "id_token": oauth2_token.get("id_token"),
-            "scope": oauth2_token.get("scope"),
-        }
+        return token["token"]
     return None
 
 
 @api_client.oauth2_token_saver
 def store_xero_oauth2_token(token):
-    oauth2_token = {
-        "id_token": token.get("id_token"),
-        "access_token": token.get("access_token"),
-        "refresh_token": token.get("refresh_token"),
-        "token_type": token.get("token_type"),
-        "expires_in": token.get("expires_in"),
-        "expires_at": token.get("expires_at"),
-        "scope": token.get("scope"),
-    }
+    # oauth2_token = {
+    #     "id_token": token.get("id_token"),
+    #     "access_token": token.get("access_token"),
+    #     "refresh_token": token.get("refresh_token"),
+    #     "token_type": token.get("token_type"),
+    #     "expires_in": token.get("expires_in"),
+    #     "expires_at": token.get("expires_at"),
+    #     "scope": token.get("scope"),
+    # }
     store_token = {
-        "token": oauth2_token,
+        "token": token,
         "modified": True
     }
     cache.set("token", store_token)

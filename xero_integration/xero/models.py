@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
+from django_countries.fields import CountryField
 
 class Contact(models.Model):
     """
@@ -39,3 +39,81 @@ class Contact(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class ContactAddress(models.Model):
+    class AddressTypes(models.TextChoices):
+        POBOX = "POBOX", _("P.O. Box")
+        POSTAL = "POSTAL", _("Postal")
+        RESIDENTIAL = "RESIDENTIAL", _("Residential")
+        STREET = "STREET", _("Street")
+        DELIVERY = "DELIVERY", _("Delivery")
+        DIGITAL_ADDRESS = "DIGITAL ADDRESS", _("Digital Address")
+
+    company_name = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name="addresses")
+    address_type = models.CharField(
+        _("Address Type"), max_length=20, choices=AddressTypes.choices, default=AddressTypes.POBOX
+    )
+    address_line1 = models.CharField(
+        _("Address Line 1"),
+        max_length=256,
+        blank=True,
+        default="",
+    )
+    address_line2 = models.CharField(
+        _("Address Line 2"),
+        max_length=256,
+        blank=True,
+        default="",
+    )
+    address_line3 = models.CharField(
+        _("Address Line 3"),
+        max_length=256,
+        blank=True,
+        default="",
+    )
+    address_line4 = models.CharField(
+        _("Address Line 4"),
+        max_length=256,
+        blank=True,
+        default="",
+    )
+    city = models.CharField(
+        _("City"),
+        max_length=256,
+        blank=True,
+        default="",
+    )
+    region = models.CharField(
+        _("Region"),
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="Region",
+    )
+    country = CountryField(
+        verbose_name=_("country"),
+        blank_label="(select country)",
+        blank=True,
+        null=True,
+        max_length=256,
+    )
+    postal_code = models.CharField(
+        _("Postal Code"),
+        max_length=20,
+        blank=True,
+        default="",
+        help_text="Postal code",
+    )
+    digital_address = models.CharField(
+        _("Digital Address"),
+        max_length=20,
+        blank=True,
+        default="",
+        help_text="Digital Address",
+    )
+
+    class Meta:
+        ordering = ("pk",)
+        verbose_name = _("Address")
+        verbose_name_plural = _("Address")

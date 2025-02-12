@@ -6,3 +6,4 @@ xero-python==7.0.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
 Authlib==1.4.1
+django-countries==7.6.1
