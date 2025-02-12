@@ -5,6 +5,8 @@ from django.conf import settings
 from requests_oauthlib import OAuth2Session
 from xero_python.api_client import ApiClient, serialize
 from xero_python.api_client.configuration import Configuration
+from xero_python.identity import IdentityApi
+from xero_python.accounting import AccountingApi
 from xero_python.api_client.oauth2 import OAuth2Token
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
@@ -107,4 +109,23 @@ def callback(request):
         raise
 
 def get_xero_tenant_id():
-    pass
+    token = obtain_xero_oauth2_token()
+    if not token:
+        return None
+
+    identity_api = IdentityApi(api_client)
+    for connection in identity_api.get_connections():
+        if connection.tenant_type == "ORGANISATION":
+            return connection.tenant_id
+
+@xero_token_required
+def get_contacts(request):
+    tenant_id = get_xero_tenant_id()
+    accounting_api = AccountingApi(api_client)
+    contacts = accounting_api.get_contacts(xero_tenant_id=tenant_id)
+    return {
+        "status": "success",
+        "message": "Contacts retrieved successfully",
+        "total_contacts": len(serialize(contacts.contacts)),
+        "data": serialize(contacts),
+    }
