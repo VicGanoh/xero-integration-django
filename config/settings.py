@@ -165,3 +165,8 @@ XERO_B64_SECRET_KEY = base64.b64encode(
 )
 WEBHOOK_KEY = os.getenv("XERO_WEBHOOK_KEY")
 STATE = secrets.token_urlsafe(32)
+
+
+if DEBUG:
+    # allow oauth2 loop to run over http (used for local testing only)
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
