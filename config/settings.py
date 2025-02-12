@@ -123,3 +123,18 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Xero
+# ------------------------------------------------------------------------------
+import os
+import base64
+import secrets
+
+CLIENT_ID = os.getenv("XERO_CLIENT_ID")
+CLIENT_SECRET = os.getenv("XERO_CLIENT_SECRET")
+XERO_B64_SECRET_KEY = base64.b64encode(
+    bytes(f"{CLIENT_ID}:{CLIENT_SECRET}", "utf-8")
+)
+WEBHOOK_KEY = os.getenv("XERO_WEBHOOK_KEY")
+STATE = secrets.token_urlsafe(32)
