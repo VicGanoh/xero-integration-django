@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+import base64
+import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,6 +82,14 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "",
     }
 }
 
@@ -154,10 +165,6 @@ LOGGING = {
 
 # Xero
 # ------------------------------------------------------------------------------
-import os
-import base64
-import secrets
-
 CLIENT_ID = os.getenv("XERO_CLIENT_ID")
 CLIENT_SECRET = os.getenv("XERO_CLIENT_SECRET")
 XERO_B64_SECRET_KEY = base64.b64encode(
@@ -165,6 +172,8 @@ XERO_B64_SECRET_KEY = base64.b64encode(
 )
 WEBHOOK_KEY = os.getenv("XERO_WEBHOOK_KEY")
 STATE = secrets.token_urlsafe(32)
+REDIRECT_URI = os.getenv("XERO_REDIRECT_URI")
+
 
 
 if DEBUG:
