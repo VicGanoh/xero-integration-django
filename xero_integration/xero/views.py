@@ -7,7 +7,8 @@ from xero_python.api_client import ApiClient, serialize
 from xero_python.api_client.configuration import Configuration
 from xero_python.identity import IdentityApi
 from xero_python.accounting import AccountingApi
-from .utils import CustomOAuth2Token
+from commons.utils import CustomOAuth2Token
+from .utils import save_contact_info
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 import logging
@@ -116,7 +117,7 @@ def callback(request):
         if response is None or response.get("access_token") is None:
             return f"Access denied: {response}"
         store_xero_oauth2_token(response)
-        return redirect("contacts")
+        return redirect("sync_xero_contacts")
     except Exception as e:
         raise
 
@@ -133,15 +134,12 @@ def get_xero_tenant_id():
             return connection.tenant_id
 
 @xero_token_required
-def get_contacts(request):
+def sync_xero_contacts(request):
     tenant_id = get_xero_tenant_id()
     logger.info("Tenant ID: %s", tenant_id)
     accounting_api = AccountingApi(api_client)
     contacts = accounting_api.get_contacts(xero_tenant_id=tenant_id)
-    
-    return JsonResponse({
-        "status": "success",
-        "message": "Contacts retrieved successfully",
-        "total_contacts": len(serialize(contacts.contacts)),
-        "data": serialize(contacts),
-    })
+    save_contact_info(serialize(contacts))
+ 
+    return redirect("admin:index")
+
