@@ -156,3 +156,35 @@ class ContactPhoneNumber(models.Model):
 
     def __str__(self) -> str:
         return f"{self.phone_label}: {self.phone_number}"
+
+
+class ContactPerson(models.Model):
+    company_name = models.ForeignKey(
+        Contact,
+        verbose_name=_("Contact/Company/Organisation"),
+        on_delete=models.CASCADE,
+        related_name="primary_contact_people",
+    )
+    job_title = models.CharField(_("Job title"), max_length=254, blank=True, default="")
+    first_name = models.CharField(_("First name"), max_length=254)
+    last_name = models.CharField(_("Last name"), max_length=254)
+    email = models.EmailField(_("Email"), max_length=254, blank=True, null=True, default="")
+    phone = PossiblePhoneNumberField(_("Phone number"), null=True)
+    primary_contact = models.BooleanField(_("Primary contact"), default=False)
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def __str__(self) -> str:
+        return f"{str(self.full_name)} {self.company_name.name}"
+
+    class Meta:
+        verbose_name = _("Contact Person")
+        verbose_name_plural = _("Contact Persons")
+
+    def save(self, *args, **kwargs):
+        if self.email == "":
+            self.email = None
+        super().save(*args, **kwargs)
+
