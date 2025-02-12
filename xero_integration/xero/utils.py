@@ -1,5 +1,8 @@
 from xero_python.api_client.oauth2 import OAuth2Token
 
+from xero_integration.xero.validators import validate_possible_phonenumber
+from phonenumber_field.modelfields import PhoneNumberField
+
 class CustomOAuth2Token(OAuth2Token):
     def update_token(
         self,
@@ -30,3 +33,9 @@ class CustomOAuth2Token(OAuth2Token):
         self.scope = scope
         self.token_type = token_type
         self.userinfo = userinfo
+
+
+class PossiblePhoneNumberField(PhoneNumberField):
+    """Less strict field for phone numbers written to database."""
+
+    default_validators = [validate_possible_phonenumber]

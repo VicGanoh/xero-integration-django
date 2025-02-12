@@ -3,6 +3,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 
+from xero_integration.xero.utils import PossiblePhoneNumberField
+
 class Contact(models.Model):
     """
     Contact is same as the organisation.
@@ -50,9 +52,17 @@ class ContactAddress(models.Model):
         DELIVERY = "DELIVERY", _("Delivery")
         DIGITAL_ADDRESS = "DIGITAL ADDRESS", _("Digital Address")
 
-    company_name = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name="addresses")
+    company_name = models.ForeignKey(
+        Contact,
+        verbose_name=_("Contact/Company/Organisation"),
+        on_delete=models.CASCADE,
+        related_name="contact_addresses",
+    )
     address_type = models.CharField(
-        _("Address Type"), max_length=20, choices=AddressTypes.choices, default=AddressTypes.POBOX
+        _("Address Type"),
+        max_length=20,
+        choices=AddressTypes.choices,
+        default=AddressTypes.POBOX,
     )
     address_line1 = models.CharField(
         _("Address Line 1"),
@@ -117,3 +127,32 @@ class ContactAddress(models.Model):
         ordering = ("pk",)
         verbose_name = _("Address")
         verbose_name_plural = _("Address")
+
+
+class ContactPhoneNumber(models.Model):
+    class PhoneLabel(models.TextChoices):
+        DEFAULT = "DEFAULT", _("Default")
+        PERSONAL = "PERSONAL", _("Personal")
+        HOME = "HOME", _("Home")
+        MOBILE = "MOBILE", _("Mobile")
+        FAX = "FAX", _("Fax")
+        DDI = "DDI", _("Direct Dial In")
+
+    company_name = models.ForeignKey(
+        Contact,
+        verbose_name=_("Contact/Company/Organisation"),
+        on_delete=models.CASCADE,
+        related_name="contact_phonenumbers",
+    )
+    phone_label = models.CharField(
+        _("Phone Label"), max_length=8, choices=PhoneLabel.choices, default=PhoneLabel.MOBILE
+    )
+    phone_number = PossiblePhoneNumberField(_("Phone number"))
+
+    class Meta:
+        verbose_name = _("Phone number")
+        verbose_name_plural = _("Phone numbers")
+        ordering = ("phone_label", "phone_number")
+
+    def __str__(self) -> str:
+        return f"{self.phone_label}: {self.phone_number}"
