@@ -11,6 +11,7 @@ from xero_python.api_client.oauth2 import OAuth2Token
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 import logging
+from django.http import JsonResponse
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ api_client = ApiClient(
     ),
     pool_threads=1,
 )
+
 
 oauth = OAuth()
 
@@ -61,14 +63,32 @@ def obtain_xero_oauth2_token():
     token = cache.get("token")
     logger.info("Cached token: %s", token)
     if token:
-        return token["token"]
+        oauth2_token = token["token"]
+        return {
+            "access_token": oauth2_token.get("access_token"),
+            "refresh_token": oauth2_token.get("refresh_token"),
+            "token_type": oauth2_token.get("token_type"),
+            "expires_in": oauth2_token.get("expires_in"),
+            "expires_at": oauth2_token.get("expires_at"),
+            "id_token": oauth2_token.get("id_token"),
+            "scope": oauth2_token.get("scope"),
+        }
     return None
 
 
 @api_client.oauth2_token_saver
 def store_xero_oauth2_token(token):
+    oauth2_token = {
+        "id_token": token.get("id_token"),
+        "access_token": token.get("access_token"),
+        "refresh_token": token.get("refresh_token"),
+        "token_type": token.get("token_type"),
+        "expires_in": token.get("expires_in"),
+        "expires_at": token.get("expires_at"),
+        "scope": token.get("scope"),
+    }
     store_token = {
-        "token": token,
+        "token": oauth2_token,
         "modified": True
     }
     cache.set("token", store_token)
@@ -78,6 +98,7 @@ def xero_token_required(function):
     @wraps(function)
     def decorator(*args, **kwargs):
         xero_token = obtain_xero_oauth2_token()
+        logger.info("Xero token required: %s", xero_token)
         if not xero_token:
             return redirect("authorize")
 
@@ -104,16 +125,18 @@ def callback(request):
         if response is None or response.get("access_token") is None:
             return f"Access denied: {response}"
         store_xero_oauth2_token(response)
-        return redirect("admin:index")
+        return redirect("contacts")
     except Exception as e:
         raise
 
 def get_xero_tenant_id():
     token = obtain_xero_oauth2_token()
+    logger.info("Token: %s", token)
     if not token:
         return None
 
-    identity_api = IdentityApi(api_client)
+    identity_api: IdentityApi = IdentityApi(api_client)
+    logger.info("Identity API: %s", identity_api.api_client)
     for connection in identity_api.get_connections():
         if connection.tenant_type == "ORGANISATION":
             return connection.tenant_id
@@ -121,11 +144,13 @@ def get_xero_tenant_id():
 @xero_token_required
 def get_contacts(request):
     tenant_id = get_xero_tenant_id()
+    logger.info("Tenant ID: %s", tenant_id)
     accounting_api = AccountingApi(api_client)
     contacts = accounting_api.get_contacts(xero_tenant_id=tenant_id)
-    return {
+    
+    return JsonResponse({
         "status": "success",
         "message": "Contacts retrieved successfully",
         "total_contacts": len(serialize(contacts.contacts)),
         "data": serialize(contacts),
-    }
+    })
