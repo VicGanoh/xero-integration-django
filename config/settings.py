@@ -217,7 +217,7 @@ WEBHOOK_KEY = os.getenv("XERO_WEBHOOK_KEY")
 STATE = secrets.token_urlsafe(32)
 REDIRECT_URI = os.getenv("XERO_REDIRECT_URI")
 
-
+SYNC_XERO_SIGNALS = True
 
 if DEBUG:
     # allow oauth2 loop to run over http (used for local testing only)

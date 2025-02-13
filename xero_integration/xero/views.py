@@ -1,5 +1,5 @@
 from functools import wraps
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from authlib.integrations.django_client import OAuth, DjangoOAuth2App
 from django.conf import settings
 from requests_oauthlib import OAuth2Session
@@ -8,11 +8,10 @@ from xero_python.api_client.configuration import Configuration
 from xero_python.identity import IdentityApi
 from xero_python.accounting import AccountingApi
 from commons.utils import CustomOAuth2Token
-from .utils import save_contact_info
+from .tasks import sync_xero_contacts_task
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 import logging
-from django.http import JsonResponse
 
 
 logger = logging.getLogger(__name__)
@@ -139,7 +138,6 @@ def sync_xero_contacts(request):
     logger.info("Tenant ID: %s", tenant_id)
     accounting_api = AccountingApi(api_client)
     contacts = accounting_api.get_contacts(xero_tenant_id=tenant_id)
-    save_contact_info(serialize(contacts))
- 
+    contacts = serialize(contacts)
+    sync_xero_contacts_task.apply_async(args=[contacts])
     return redirect("admin:index")
-
