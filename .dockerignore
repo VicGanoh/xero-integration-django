@@ -1,0 +1,7 @@
+venv
+.gitignore
+.python-version
+.env
+.envs/
+.DS_Store
+.envs
