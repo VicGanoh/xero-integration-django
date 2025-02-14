@@ -1,4 +1,5 @@
 from functools import wraps
+from typing import Any
 from django.shortcuts import redirect
 from authlib.integrations.django_client import OAuth, DjangoOAuth2App
 from django.conf import settings
@@ -140,4 +141,27 @@ def sync_xero_contacts(request):
     contacts = accounting_api.get_contacts(xero_tenant_id=tenant_id)
     contacts = serialize(contacts)
     sync_xero_contacts_task.apply_async(args=[contacts])
+    return redirect("admin:index")
+
+@xero_token_required
+def create_contacts(request):
+    tenant_id = get_xero_tenant_id()
+    contact_data: list[dict[str, Any]] = []
+    contact_data.append({
+        "contact_id": "1234567890",
+        "name": "John Doe",
+        "email_address": "john.doe@example.com",
+        "is_supplier": True,
+        "is_customer": False,
+    })
+    accounting_api = AccountingApi(api_client)
+    try:
+        result = accounting_api.create_contacts(
+            xero_tenant_id=tenant_id,
+            contacts=contact_data,
+            summarize_errors=False
+        )
+        logger.info("Result: %s", result)
+    except Exception as e:
+        logger.error("Error: %s", e)
     return redirect("admin:index")
