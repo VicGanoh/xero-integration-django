@@ -140,3 +140,5 @@ config.py
 
 # IDE specific
 .vscode
+
+postgres_data/

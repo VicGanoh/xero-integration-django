@@ -3,7 +3,7 @@ from typing import Any
 from django.shortcuts import redirect
 from authlib.integrations.django_client import OAuth, DjangoOAuth2App
 from django.conf import settings
-from requests_oauthlib import OAuth2Session
+from authlib.integrations.requests_client import OAuth2Session
 from xero_python.api_client import ApiClient, serialize
 from xero_python.api_client.configuration import Configuration
 from xero_python.identity import IdentityApi
@@ -37,7 +37,7 @@ oauth2_client = OAuth2Session(
         "offline_access openid profile email accounting.transactions "
         "accounting.contacts accounting.contacts.read"
     ),
-    redirect_uri=settings.REDIRECT_URI,
+    redirect_uri="http://localhost:8000/xero/callback/",
 )
 
 
@@ -100,7 +100,7 @@ def xero_token_required(function):
 
 def authorize(request):
     if not obtain_xero_oauth2_token():
-        redirect_uri = settings.REDIRECT_URI
+        redirect_uri = "http://localhost:8000/xero/callback/"
         response = xero.authorize_redirect(
             request,
             redirect_uri,
@@ -117,7 +117,7 @@ def callback(request):
         if response is None or response.get("access_token") is None:
             return f"Access denied: {response}"
         store_xero_oauth2_token(response)
-        return redirect("sync_xero_contacts")
+        return redirect("admin:index")
     except Exception as e:
         raise
 
